@@ -1,0 +1,26 @@
+FROM quay.io/keycloak/keycloak:26.1.4
+
+# Copy the provider JAR to Keycloak's providers directory
+COPY target/keycloak-vault-provider-1.0-SNAPSHOT.jar /opt/keycloak/providers/
+
+# Runtime configuration
+ENV KEYCLOAK_ADMIN=admin \
+    KEYCLOAK_ADMIN_PASSWORD=admin \
+    KC_DB=postgres \
+    KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak \
+    KC_DB_USERNAME=keycloak \
+    KC_DB_PASSWORD=keycloak \
+    KC_HEALTH_ENABLED=true \
+    KC_METRICS_ENABLED=true \
+    KC_HOSTNAME_STRICT=false \
+    KC_HOSTNAME_STRICT_HTTPS=false \
+    KC_HTTP_ENABLED=true \
+    KC_PROXY=edge \
+    KC_FEATURES=token-exchange,scripts,preview \
+    KC_CLIENT_SECRET_MANAGER=vault \
+    VAULT_ADDR=http://vault:8200 \
+    VAULT_TOKEN=root
+
+# Start Keycloak
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+CMD ["start"] 

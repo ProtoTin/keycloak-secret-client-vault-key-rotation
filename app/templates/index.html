@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Status Dashboard</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% if status.error %}
+        <div class="alert alert-danger" role="alert">
+            Error: {{ status.error }}
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <!-- User Information Card -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">User Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>Username:</strong> {{ status.user_info.username }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Email:</strong> {{ status.user_info.email }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Name:</strong> {{ status.user_info.name }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Roles:</strong>
+                                {% for role in status.user_info.roles %}
+                                <span class="badge bg-secondary">{{ role }}</span>
+                                {% endfor %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Status Card -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">System Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>Vault Status:</strong>
+                                {% if status.vault_connected %}
+                                <span class="badge bg-success">Connected</span>
+                                {% else %}
+                                <span class="badge bg-danger">Disconnected</span>
+                                {% endif %}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Keycloak Status:</strong>
+                                {% if status.keycloak_connected %}
+                                <span class="badge bg-success">Connected</span>
+                                {% else %}
+                                <span class="badge bg-danger">Disconnected</span>
+                                {% endif %}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Secret Version:</strong> {{ status.system_info.secret_version }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Secret Created:</strong> {{ status.system_info.secret_created }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Last Check:</strong> {{ status.secret_last_fetched }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="card-title mb-0">Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary me-2" onclick="window.location.reload()">
+                            <i class="fa fa-refresh"></i> Refresh Status
+                        </button>
+                        <button class="btn btn-warning me-2" onclick="alert('Feature coming soon!')">
+                            <i class="fa fa-key"></i> Rotate Secret
+                        </button>
+                        <button class="btn btn-info" onclick="alert('Feature coming soon!')">
+                            <i class="fa fa-history"></i> View History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

@@ -1,0 +1,5 @@
+com/example/keycloak/vault/VaultClient.class
+com/example/keycloak/vault/ClientSecretManager.class
+com/example/keycloak/vault/ClientSecretManagerFactory.class
+com/example/keycloak/vault/VaultClientSecretProvider.class
+com/example/keycloak/vault/VaultClientSecretProviderFactory.class
