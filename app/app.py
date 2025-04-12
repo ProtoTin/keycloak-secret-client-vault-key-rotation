@@ -5,6 +5,8 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 from functools import wraps
+import requests
+import subprocess
 
 # Load environment variables
 load_dotenv()
@@ -74,6 +76,47 @@ def get_keycloak_client():
         client_secret_key=client_secret
     )
 
+def get_keycloak_admin_client():
+    """Get a Keycloak admin client to access the admin API"""
+    try:
+        # Get admin token
+        admin_token = requests.post(
+            f"{keycloak_settings['server_url']}realms/master/protocol/openid-connect/token",
+            data={
+                "username": "admin",
+                "password": "admin",
+                "grant_type": "password",
+                "client_id": "admin-cli"
+            }
+        ).json()
+        
+        return admin_token.get('access_token')
+    except Exception as e:
+        print(f"Error getting admin token: {str(e)}")
+        return None
+
+def get_keycloak_clients():
+    """Get list of clients from Keycloak"""
+    admin_token = get_keycloak_admin_client()
+    if not admin_token:
+        return []
+    
+    try:
+        # Get clients from Keycloak
+        response = requests.get(
+            f"{keycloak_settings['server_url']}admin/realms/{keycloak_settings['realm_name']}/clients",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error getting clients: {response.text}")
+            return []
+    except Exception as e:
+        print(f"Error getting clients: {str(e)}")
+        return []
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -121,18 +164,42 @@ def index():
         # Get user info from token
         user_info = keycloak_client.userinfo(token=access_token)
         
-        # Get current secret from Vault
-        client = get_vault_client()
-        secret_info = client.secrets.kv.v2.read_secret_version(
-            path='keycloak/clients/demo-client',
-            mount_point='secret'
-        )
+        # Get list of clients from Keycloak
+        clients = get_keycloak_clients()
         
-        # Get secret metadata
-        secret_metadata = client.secrets.kv.v2.read_secret_metadata(
-            path='keycloak/clients/demo-client',
-            mount_point='secret'
-        )
+        # Get current secret from Vault with no caching
+        client = get_vault_client()
+        
+        # Get secrets for all clients
+        client_secrets = {}
+        for client_info in clients:
+            client_id = client_info.get('clientId')
+            if client_id:
+                try:
+                    secret_info = client.secrets.kv.v2.read_secret_version(
+                        path=f'keycloak/clients/{client_id}',
+                        mount_point='secret',
+                        version=None  # This ensures we get the latest version
+                    )
+                    
+                    # Get secret metadata with no caching
+                    secret_metadata = client.secrets.kv.v2.read_secret_metadata(
+                        path=f'keycloak/clients/{client_id}',
+                        mount_point='secret'
+                    )
+                    
+                    client_secrets[client_id] = {
+                        'version': secret_metadata.get('data', {}).get('current_version', 'Unknown'),
+                        'created': secret_metadata.get('data', {}).get('created_time', 'Unknown'),
+                        'secret': secret_info.get('data', {}).get('data', {}).get('client_secret', 'Unknown')
+                    }
+                except Exception as e:
+                    print(f"Error getting secret for client {client_id}: {str(e)}")
+                    client_secrets[client_id] = {
+                        'version': 'Unknown',
+                        'created': 'Unknown',
+                        'secret': 'Unknown'
+                    }
         
         status = {
             'vault_connected': True,
@@ -143,20 +210,32 @@ def index():
                 'username': user_info.get('preferred_username', 'Unknown'),
                 'email': user_info.get('email', 'Not provided'),
                 'name': user_info.get('name', 'Not provided'),
-                'roles': user_info.get('realm_access', {}).get('roles', [])
+                'roles': user_info.get('realm_access', {}).get('roles', []),
+                'client_id': keycloak_settings['client_id']
             },
             'system_info': {
-                'secret_version': secret_metadata.get('data', {}).get('current_version', 'Unknown'),
-                'secret_created': secret_metadata.get('data', {}).get('created_time', 'Unknown'),
                 'vault_status': 'Healthy',
                 'keycloak_status': 'Connected'
-            }
+            },
+            'clients': client_secrets
         }
     except Exception as e:
         status = {
             'vault_connected': False,
             'keycloak_connected': False,
-            'error': str(e)
+            'error': str(e),
+            'user_info': {
+                'username': session.get('username', 'Unknown'),
+                'email': 'Not available',
+                'name': 'Not available',
+                'roles': [],
+                'client_id': keycloak_settings['client_id']
+            },
+            'system_info': {
+                'vault_status': 'Unhealthy',
+                'keycloak_status': 'Disconnected'
+            },
+            'clients': {}
         }
     
     return render_template('index.html', status=status)
@@ -177,6 +256,39 @@ def health():
         return jsonify({
             'status': 'unhealthy',
             'error': str(e)
+        }), 500
+
+@app.route('/rotate-secret', methods=['POST'])
+@login_required
+def rotate_secret():
+    try:
+        # Get client_id from request or use the current client ID from session
+        data = request.get_json()
+        client_id = data.get('client_id') if data else None
+        if not client_id:
+            client_id = session.get('token', {}).get('client_id', keycloak_settings['client_id'])
+        
+        # Execute the rotation script with the client_id
+        result = subprocess.run(['/app/scripts/rotate-secrets.sh', client_id], 
+                              capture_output=True, 
+                              text=True)
+        
+        if result.returncode == 0:
+            return jsonify({
+                'success': True,
+                'message': f'Secret rotation completed successfully for client {client_id}',
+                'details': result.stdout
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Secret rotation failed for client {client_id}',
+                'details': result.stderr
+            }), 500
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
         }), 500
 
 if __name__ == '__main__':

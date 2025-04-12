@@ -3,78 +3,513 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Keycloak Demo</title>
+    <title>CyberVault - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        :root {
+            --primary-color: #00f7ff;
+            --primary-dark: #00c4cc;
+            --secondary-color: #6c757d;
+            --success-color: #00ff9d;
+            --danger-color: #ff3e3e;
+            --warning-color: #ffb800;
+            --info-color: #00a8ff;
+            --light-color: #f8f9fa;
+            --dark-color: #0a0e17;
+            --darker-color: #050a14;
+            --border-color: #1a2234;
+            --card-bg: #0f1625;
+            --text-color: #e0e0e0;
+            --text-muted: #8a8fa3;
+            --neon-glow: 0 0 10px rgba(0, 247, 255, 0.5);
+            --neon-glow-strong: 0 0 15px rgba(0, 247, 255, 0.7);
+        }
+        
+        * {
             margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--dark-color);
+            color: var(--text-color);
             min-height: 100vh;
-            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: 
+                linear-gradient(to bottom, rgba(10, 14, 23, 0.9), rgba(10, 14, 23, 0.95)),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="rgba(0,247,255,0.05)" stroke-width="0.5"/></svg>');
+            background-size: cover;
+            background-attachment: fixed;
+            position: relative;
+            overflow: hidden;
         }
+        
+        /* Cyber Grid Background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 247, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 247, 255, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        /* Animated Lines */
+        .cyber-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            height: 1px;
+            width: 100%;
+            opacity: 0.3;
+            z-index: -1;
+        }
+        
+        .cyber-line.top {
+            top: 0;
+            animation: moveLine 8s linear infinite;
+        }
+        
+        .cyber-line.bottom {
+            bottom: 0;
+            animation: moveLine 8s linear infinite reverse;
+        }
+        
+        @keyframes moveLine {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        
+        /* Login Container */
         .login-container {
-            background: white;
+            width: 100%;
+            max-width: 450px;
             padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Login Card */
+        .login-card {
+            background-color: var(--card-bg);
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
         }
-        .form-group {
-            margin-bottom: 1rem;
+        
+        /* Cyber Corners */
+        .cyber-corner {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-color: var(--primary-color);
+            opacity: 0.7;
         }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #333;
+        
+        .cyber-corner.top-left {
+            top: 0;
+            left: 0;
+            border-top: 2px solid;
+            border-left: 2px solid;
         }
-        input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
+        
+        .cyber-corner.top-right {
+            top: 0;
+            right: 0;
+            border-top: 2px solid;
+            border-right: 2px solid;
         }
-        button {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
+        
+        .cyber-corner.bottom-left {
+            bottom: 0;
+            left: 0;
+            border-bottom: 2px solid;
+            border-left: 2px solid;
         }
-        button:hover {
-            background-color: #45a049;
+        
+        .cyber-corner.bottom-right {
+            bottom: 0;
+            right: 0;
+            border-bottom: 2px solid;
+            border-right: 2px solid;
         }
-        .error {
-            color: #dc3545;
-            margin-bottom: 1rem;
+        
+        /* Login Header */
+        .login-header {
             text-align: center;
+            padding: 2rem 1.5rem;
+            background-color: rgba(15, 22, 37, 0.8);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+        
+        .login-logo {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--darker-color);
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 auto 1.5rem;
+            box-shadow: var(--neon-glow);
+            position: relative;
+        }
+        
+        .login-logo::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border: 1px solid rgba(0, 247, 255, 0.3);
+            border-radius: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.4;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
+        
+        .login-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: var(--neon-glow);
+        }
+        
+        .login-subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+        
+        /* Login Form */
+        .login-form {
+            padding: 2rem 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+        }
+        
+        .form-control {
+            background-color: rgba(15, 22, 37, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .form-control:focus {
+            background-color: rgba(15, 22, 37, 0.9);
+            border-color: var(--primary-color);
+            box-shadow: var(--neon-glow);
+            color: var(--text-color);
+        }
+        
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .input-group-text {
+            background-color: rgba(15, 22, 37, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 8px 0 0 8px;
+            color: var(--text-muted);
+        }
+        
+        .input-group .form-control {
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 2.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .password-toggle:hover {
+            color: var(--primary-color);
+        }
+        
+        .form-check {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-check-input {
+            background-color: rgba(15, 22, 37, 0.8);
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .form-check-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .btn-login {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-login:hover {
+            background-color: var(--primary-color);
+            color: var(--darker-color);
+            box-shadow: var(--neon-glow-strong);
+            transform: translateY(-2px);
+        }
+        
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 247, 255, 0.2), transparent);
+            transition: all 0.5s;
+        }
+        
+        .btn-login:hover::before {
+            left: 100%;
+        }
+        
+        /* Error Message */
+        .alert-danger {
+            background-color: rgba(255, 62, 62, 0.1);
+            border: 1px solid rgba(255, 62, 62, 0.3);
+            color: var(--danger-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .alert-danger i {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+        
+        /* Glitch Effect */
+        .glitch {
+            position: relative;
+        }
+        
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+        
+        .glitch::before {
+            color: var(--info-color);
+            z-index: -1;
+            animation: glitch-effect 3s infinite;
+        }
+        
+        .glitch::after {
+            color: var(--danger-color);
+            z-index: -2;
+            animation: glitch-effect 2s infinite;
+        }
+        
+        @keyframes glitch-effect {
+            0% {
+                transform: translate(0);
+            }
+            20% {
+                transform: translate(-2px, 2px);
+            }
+            40% {
+                transform: translate(-2px, -2px);
+            }
+            60% {
+                transform: translate(2px, 2px);
+            }
+            80% {
+                transform: translate(2px, -2px);
+            }
+            100% {
+                transform: translate(0);
+            }
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 576px) {
+            .login-container {
+                padding: 1.5rem;
+            }
+            
+            .login-header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .login-logo {
+                width: 60px;
+                height: 60px;
+                font-size: 1.75rem;
+            }
+            
+            .login-title {
+                font-size: 1.5rem;
+            }
+            
+            .login-form {
+                padding: 1.5rem 1rem;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="cyber-line top"></div>
+    <div class="cyber-line bottom"></div>
+    
     <div class="login-container">
-        <h2 style="text-align: center; margin-bottom: 2rem;">Login</h2>
-        {% if error %}
-        <div class="error">{{ error }}</div>
-        {% endif %}
-        <form method="POST" action="{{ url_for('login') }}">
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
+        <div class="login-card">
+            <div class="cyber-corner top-left"></div>
+            <div class="cyber-corner top-right"></div>
+            <div class="cyber-corner bottom-left"></div>
+            <div class="cyber-corner bottom-right"></div>
+            
+            <div class="login-header">
+                <div class="login-logo">
+                    <i class="fa fa-shield"></i>
+                </div>
+                <h1 class="login-title glitch" data-text="CyberVault">CyberVault</h1>
+                <p class="login-subtitle">Secure Authentication Portal</p>
             </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
+            
+            <div class="login-form">
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="fa fa-exclamation-circle"></i>
+                    <div>{{ error }}</div>
+                </div>
+                {% endif %}
+                
+                <form method="post" action="/login">
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fa fa-user"></i>
+                            </span>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fa fa-lock"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                            <i class="fa fa-eye password-toggle" id="togglePassword"></i>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="client_id" value="demo-client">
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">
+                            Remember me
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-login">
+                        <i class="fa fa-sign-in"></i> Login
+                    </button>
+                </form>
             </div>
-            <button type="submit">Login</button>
-        </form>
+        </div>
     </div>
+    
+    <script>
+        // Toggle password visibility
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
+        
+        togglePassword.addEventListener('click', function() {
+            // Toggle the type attribute
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            
+            // Toggle the eye icon
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+    </script>
 </body>
 </html> 

@@ -3,118 +3,1104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Status Dashboard</title>
+    <title>CyberVault - Keycloak-Vault Integration</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #00f7ff;
+            --primary-dark: #00c4cc;
+            --secondary-color: #6c757d;
+            --success-color: #00ff9d;
+            --danger-color: #ff3e3e;
+            --warning-color: #ffb800;
+            --info-color: #00a8ff;
+            --light-color: #f8f9fa;
+            --dark-color: #0a0e17;
+            --darker-color: #050a14;
+            --border-color: #1a2234;
+            --card-bg: #0f1625;
+            --text-color: #e0e0e0;
+            --text-muted: #8a8fa3;
+            --neon-glow: 0 0 10px rgba(0, 247, 255, 0.5);
+            --neon-glow-strong: 0 0 15px rgba(0, 247, 255, 0.7);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--dark-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            background-image: 
+                linear-gradient(to bottom, rgba(10, 14, 23, 0.9), rgba(10, 14, 23, 0.95)),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="rgba(0,247,255,0.05)" stroke-width="0.5"/></svg>');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+        
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background-color: var(--darker-color);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--darker-color);
+            font-weight: 700;
+            margin-right: 0.75rem;
+            box-shadow: var(--neon-glow);
+        }
+        
+        .sidebar-title {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: var(--darker-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-right: 1rem;
+            box-shadow: var(--neon-glow);
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+        
+        .user-email {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(0, 247, 255, 0.05);
+            color: var(--primary-color);
+            border-color: rgba(0, 247, 255, 0.2);
+        }
+        
+        .nav-link.active {
+            background-color: rgba(0, 247, 255, 0.1);
+            color: var(--primary-color);
+            border-color: rgba(0, 247, 255, 0.3);
+            box-shadow: var(--neon-glow);
+        }
+        
+        .nav-link i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .nav-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 1.5rem 0;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: var(--neon-glow);
+        }
+        
+        .page-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+        }
+        
+        .btn i {
+            margin-right: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-color);
+            color: var(--darker-color);
+            box-shadow: var(--neon-glow-strong);
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline-primary {
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            background-color: transparent;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: rgba(0, 247, 255, 0.1);
+            color: var(--primary-color);
+            box-shadow: var(--neon-glow);
+            transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background-color: transparent;
+            border: 1px solid var(--warning-color);
+            color: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background-color: var(--warning-color);
+            color: var(--darker-color);
+            box-shadow: 0 0 15px rgba(255, 184, 0, 0.7);
+            transform: translateY(-2px);
+        }
+        
+        .btn-info {
+            background-color: transparent;
+            border: 1px solid var(--info-color);
+            color: var(--info-color);
+        }
+        
+        .btn-info:hover {
+            background-color: var(--info-color);
+            color: var(--darker-color);
+            box-shadow: 0 0 15px rgba(0, 168, 255, 0.7);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background-color: transparent;
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: var(--success-color);
+            color: var(--darker-color);
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.7);
+            transform: translateY(-2px);
+        }
+        
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: rgba(15, 22, 37, 0.8);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+        
+        .card-header i {
+            margin-right: 0.75rem;
+            color: var(--primary-color);
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        /* Status Cards */
+        .status-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            height: 100%;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+            opacity: 0.7;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 247, 255, 0.3);
+        }
+        
+        .status-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            background-color: rgba(15, 22, 37, 0.8);
+            border: 1px solid var(--border-color);
+        }
+        
+        .status-icon.success {
+            color: var(--success-color);
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+            border-color: rgba(0, 255, 157, 0.3);
+        }
+        
+        .status-icon.danger {
+            color: var(--danger-color);
+            box-shadow: 0 0 10px rgba(255, 62, 62, 0.3);
+            border-color: rgba(255, 62, 62, 0.3);
+        }
+        
+        .status-icon.info {
+            color: var(--info-color);
+            box-shadow: 0 0 10px rgba(0, 168, 255, 0.3);
+            border-color: rgba(0, 168, 255, 0.3);
+        }
+        
+        .status-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+        
+        .status-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .status-badge.success {
+            background-color: rgba(0, 255, 157, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(0, 255, 157, 0.3);
+        }
+        
+        .status-badge.danger {
+            background-color: rgba(255, 62, 62, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(255, 62, 62, 0.3);
+        }
+        
+        .status-badge.warning {
+            background-color: rgba(255, 184, 0, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(255, 184, 0, 0.3);
+        }
+        
+        .status-badge.info {
+            background-color: rgba(0, 168, 255, 0.1);
+            color: var(--info-color);
+            border: 1px solid rgba(0, 168, 255, 0.3);
+        }
+        
+        /* User Info and System Details */
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .info-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            background-color: rgba(0, 247, 255, 0.1);
+            color: var(--primary-color);
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid rgba(0, 247, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Alert Styles */
+        .alert {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            background-color: var(--card-bg);
+        }
+        
+        .alert i {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+        
+        .alert-danger {
+            border-color: rgba(255, 62, 62, 0.3);
+            color: var(--danger-color);
+        }
+        
+        /* Toast Styles */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .toast.success {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+        }
+        
+        .toast.error {
+            background: linear-gradient(135deg, #d63031, #e17055);
+        }
+        
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toast i {
+            font-size: 1.2em;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Button Loading State */
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 80px;
+                padding: 1rem 0.5rem;
+            }
+            
+            .sidebar-header {
+                justify-content: center;
+                padding-bottom: 0.5rem;
+            }
+            
+            .sidebar-title, .user-info, .nav-link span {
+                display: none;
+            }
+            
+            .user-profile {
+                justify-content: center;
+                padding: 0.5rem;
+            }
+            
+            .user-avatar {
+                margin-right: 0;
+            }
+            
+            .nav-link {
+                justify-content: center;
+                padding: 0.75rem;
+            }
+            
+            .nav-link i {
+                margin-right: 0;
+                font-size: 1.25rem;
+            }
+            
+            .main-content {
+                margin-left: 80px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1.5rem;
+            }
+            
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .page-actions {
+                width: 100%;
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+            }
+        }
+        
+        /* Animation */
+        .refresh-animation {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Cyber Elements */
+        .cyber-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 247, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 247, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .cyber-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            height: 1px;
+            width: 100%;
+            opacity: 0.3;
+        }
+        
+        .cyber-line.top {
+            top: 0;
+        }
+        
+        .cyber-line.bottom {
+            bottom: 0;
+        }
+        
+        .cyber-corner {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-color: var(--primary-color);
+            opacity: 0.7;
+        }
+        
+        .cyber-corner.top-left {
+            top: 0;
+            left: 0;
+            border-top: 2px solid;
+            border-left: 2px solid;
+        }
+        
+        .cyber-corner.top-right {
+            top: 0;
+            right: 0;
+            border-top: 2px solid;
+            border-right: 2px solid;
+        }
+        
+        .cyber-corner.bottom-left {
+            bottom: 0;
+            left: 0;
+            border-bottom: 2px solid;
+            border-left: 2px solid;
+        }
+        
+        .cyber-corner.bottom-right {
+            bottom: 0;
+            right: 0;
+            border-bottom: 2px solid;
+            border-right: 2px solid;
+        }
+        
+        /* Glitch Effect */
+        .glitch {
+            position: relative;
+        }
+        
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+        
+        .glitch::before {
+            color: var(--info-color);
+            z-index: -1;
+            animation: glitch-effect 3s infinite;
+        }
+        
+        .glitch::after {
+            color: var(--danger-color);
+            z-index: -2;
+            animation: glitch-effect 2s infinite;
+        }
+        
+        @keyframes glitch-effect {
+            0% {
+                transform: translate(0);
+            }
+            20% {
+                transform: translate(-2px, 2px);
+            }
+            40% {
+                transform: translate(-2px, -2px);
+            }
+            60% {
+                transform: translate(2px, 2px);
+            }
+            80% {
+                transform: translate(2px, -2px);
+            }
+            100% {
+                transform: translate(0);
+            }
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Status Dashboard</a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/logout">Logout</a>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fa fa-shield"></i>
+                </div>
+                <div class="sidebar-title">CyberVault</div>
             </div>
+            
+            <div class="user-profile">
+                <div class="user-avatar">
+                    {{ status.user_info.username[0]|upper }}
+                </div>
+                <div class="user-info">
+                    <div class="user-name">{{ status.user_info.username }}</div>
+                    <div class="user-email">{{ status.user_info.email }}</div>
+                </div>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">
+                        <i class="fa fa-dashboard"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">
+                        <i class="fa fa-key"></i>
+                        <span>Secret Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">
+                        <i class="fa fa-history"></i>
+                        <span>Audit Logs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="alert('Feature coming soon!')">
+                        <i class="fa fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="nav-divider"></div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">
+                        <i class="fa fa-sign-out"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
         </div>
-    </nav>
-
-    <div class="container mt-4">
-        {% if status.error %}
-        <div class="alert alert-danger" role="alert">
-            Error: {{ status.error }}
-        </div>
-        {% endif %}
-
-        <div class="row">
-            <!-- User Information Card -->
-            <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">User Information</h5>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h1 class="page-title glitch" data-text="Dashboard">Dashboard</h1>
+                <div class="page-actions">
+                    <button class="btn btn-outline-primary" onclick="refreshStatus()">
+                        <i class="fa fa-refresh" id="refresh-icon"></i> Refresh
+                    </button>
+                    <button class="btn btn-warning" onclick="rotateSecret()">
+                        <i class="fa fa-key"></i> Rotate Current Client Secret
+                    </button>
+                    <button class="btn btn-info" onclick="viewHistory()">
+                        <i class="fa fa-history"></i> History
+                    </button>
+                    <button class="btn btn-success" onclick="exportData()">
+                        <i class="fa fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            
+            {% if status.error %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fa fa-exclamation-circle"></i>
+                <div>
+                    <strong>Error:</strong> {{ status.error }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Status Overview -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="status-card">
+                        <div class="cyber-corner top-left"></div>
+                        <div class="cyber-corner top-right"></div>
+                        <div class="cyber-corner bottom-left"></div>
+                        <div class="cyber-corner bottom-right"></div>
+                        <div class="cyber-line top"></div>
+                        <div class="cyber-line bottom"></div>
+                        <div class="status-icon {% if status.vault_connected %}success{% else %}danger{% endif %}">
+                            <i class="fa fa-database"></i>
+                        </div>
+                        <h3 class="status-title">Vault</h3>
+                        <div class="status-badge {% if status.vault_connected %}success{% else %}danger{% endif %}">
+                            {% if status.vault_connected %}Connected{% else %}Disconnected{% endif %}
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <strong>Username:</strong> {{ status.user_info.username }}
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Email:</strong> {{ status.user_info.email }}
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Name:</strong> {{ status.user_info.name }}
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Roles:</strong>
-                                {% for role in status.user_info.roles %}
-                                <span class="badge bg-secondary">{{ role }}</span>
-                                {% endfor %}
-                            </li>
-                        </ul>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="status-card">
+                        <div class="cyber-corner top-left"></div>
+                        <div class="cyber-corner top-right"></div>
+                        <div class="cyber-corner bottom-left"></div>
+                        <div class="cyber-corner bottom-right"></div>
+                        <div class="cyber-line top"></div>
+                        <div class="cyber-line bottom"></div>
+                        <div class="status-icon {% if status.keycloak_connected %}success{% else %}danger{% endif %}">
+                            <i class="fa fa-lock"></i>
+                        </div>
+                        <h3 class="status-title">Keycloak</h3>
+                        <div class="status-badge {% if status.keycloak_connected %}success{% else %}danger{% endif %}">
+                            {% if status.keycloak_connected %}Connected{% else %}Disconnected{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="status-card">
+                        <div class="cyber-corner top-left"></div>
+                        <div class="cyber-corner top-right"></div>
+                        <div class="cyber-corner bottom-left"></div>
+                        <div class="cyber-corner bottom-right"></div>
+                        <div class="cyber-line top"></div>
+                        <div class="cyber-line bottom"></div>
+                        <div class="status-icon {% if status.token_works %}success{% else %}danger{% endif %}">
+                            <i class="fa fa-key"></i>
+                        </div>
+                        <h3 class="status-title">Token</h3>
+                        <div class="status-badge {% if status.token_works %}success{% else %}danger{% endif %}">
+                            {% if status.token_works %}Valid{% else %}Invalid{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="status-card">
+                        <div class="cyber-corner top-left"></div>
+                        <div class="cyber-corner top-right"></div>
+                        <div class="cyber-corner bottom-left"></div>
+                        <div class="cyber-corner bottom-right"></div>
+                        <div class="cyber-line top"></div>
+                        <div class="cyber-line bottom"></div>
+                        <div class="status-icon info">
+                            <i class="fa fa-clock-o"></i>
+                        </div>
+                        <h3 class="status-title">Last Check</h3>
+                        <div class="status-value">{{ status.secret_last_fetched }}</div>
                     </div>
                 </div>
             </div>
-
-            <!-- System Status Card -->
-            <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="card-title mb-0">System Status</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <strong>Vault Status:</strong>
-                                {% if status.vault_connected %}
-                                <span class="badge bg-success">Connected</span>
-                                {% else %}
-                                <span class="badge bg-danger">Disconnected</span>
-                                {% endif %}
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Keycloak Status:</strong>
-                                {% if status.keycloak_connected %}
-                                <span class="badge bg-success">Connected</span>
-                                {% else %}
-                                <span class="badge bg-danger">Disconnected</span>
-                                {% endif %}
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Secret Version:</strong> {{ status.system_info.secret_version }}
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Secret Created:</strong> {{ status.system_info.secret_created }}
-                            </li>
-                            <li class="list-group-item">
-                                <strong>Last Check:</strong> {{ status.secret_last_fetched }}
-                            </li>
-                        </ul>
+            
+            <div class="row">
+                <!-- User Information -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="cyber-corner top-left"></div>
+                        <div class="cyber-corner top-right"></div>
+                        <div class="cyber-corner bottom-left"></div>
+                        <div class="cyber-corner bottom-right"></div>
+                        <div class="cyber-line top"></div>
+                        <div class="cyber-line bottom"></div>
+                        <div class="card-header">
+                            <i class="fa fa-user"></i> User Information
+                        </div>
+                        <div class="card-body">
+                            <ul class="info-list">
+                                <li class="info-item">
+                                    <span class="info-label">Username</span>
+                                    <span class="info-value">{{ status.user_info.username }}</span>
+                                </li>
+                                <li class="info-item">
+                                    <span class="info-label">Email</span>
+                                    <span class="info-value">{{ status.user_info.email }}</span>
+                                </li>
+                                <li class="info-item">
+                                    <span class="info-label">Name</span>
+                                    <span class="info-value">{{ status.user_info.name }}</span>
+                                </li>
+                                <li class="info-item">
+                                    <span class="info-label">Roles</span>
+                                    <div>
+                                        {% if status.user_info.roles %}
+                                            {% for role in status.user_info.roles %}
+                                            <span class="role-badge">{{ role }}</span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted">No roles assigned</span>
+                                        {% endif %}
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="card-title mb-0">Actions</h5>
-                    </div>
-                    <div class="card-body">
-                        <button class="btn btn-primary me-2" onclick="window.location.reload()">
-                            <i class="fa fa-refresh"></i> Refresh Status
-                        </button>
-                        <button class="btn btn-warning me-2" onclick="alert('Feature coming soon!')">
-                            <i class="fa fa-key"></i> Rotate Secret
-                        </button>
-                        <button class="btn btn-info" onclick="alert('Feature coming soon!')">
-                            <i class="fa fa-history"></i> View History
-                        </button>
+                
+                <!-- System Details -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="cyber-corner top-left"></div>
+                        <div class="cyber-corner top-right"></div>
+                        <div class="cyber-corner bottom-left"></div>
+                        <div class="cyber-corner bottom-right"></div>
+                        <div class="cyber-line top"></div>
+                        <div class="cyber-line bottom"></div>
+                        <div class="card-header">
+                            <i class="fa fa-server"></i> System Details
+                        </div>
+                        <div class="card-body">
+                            <ul class="info-list">
+                                <li class="info-item">
+                                    <span class="info-label">Vault Status</span>
+                                    <span class="status-badge {% if status.vault_connected %}success{% else %}danger{% endif %}">
+                                        {{ status.system_info.vault_status }}
+                                    </span>
+                                </li>
+                                <li class="info-item">
+                                    <span class="info-label">Keycloak Status</span>
+                                    <span class="status-badge {% if status.keycloak_connected %}success{% else %}danger{% endif %}">
+                                        {{ status.system_info.keycloak_status }}
+                                    </span>
+                                </li>
+                                {% if status.clients and status.clients.get('demo-client') %}
+                                <li class="info-item">
+                                    <span class="info-label">Current Secret Version</span>
+                                    <span class="info-value">{{ status.clients['demo-client'].version }}</span>
+                                </li>
+                                <li class="info-item">
+                                    <span class="info-label">Secret Created</span>
+                                    <span class="info-value">{{ status.clients['demo-client'].created }}</span>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
+    
+    <!-- Toast Notification -->
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" id="toast">
+        <div class="toast-header">
+            <strong class="me-auto" id="toast-title">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toast-message">
+            This is a toast message.
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize toast
+        var toastEl = document.getElementById('toast');
+        var toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 3000 });
+        
+        // Refresh status function
+        function refreshStatus() {
+            // Add animation to refresh icon
+            document.getElementById('refresh-icon').classList.add('refresh-animation');
+            
+            // Reload the page after a short delay to show the animation
+            setTimeout(function() {
+                window.location.reload();
+            }, 500);
+        }
+        
+        // Rotate secret function
+        function rotateSecret() {
+            const button = document.getElementById('rotateSecretBtn');
+            const originalText = button.innerHTML;
+            
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner"></i> Rotating...';
+            
+            fetch('/rotate-secret', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('success', 'Secret rotation completed successfully');
+                    // Refresh the page after 2 seconds to show updated status
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showToast('error', data.message || 'Failed to rotate secret');
+                }
+            })
+            .catch(error => {
+                showToast('error', 'An error occurred while rotating the secret');
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Restore button state
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        }
+        
+        // View history function
+        function viewHistory() {
+            showToast('History View', 'Feature coming soon!', 'warning');
+        }
+        
+        // Export data function
+        function exportData() {
+            showToast('Exporting Data', 'Preparing data for export...', 'info');
+            
+            // Simulate API call
+            setTimeout(function() {
+                showToast('Export Complete', 'Data has been exported successfully.', 'success');
+            }, 1500);
+        }
+        
+        // Show toast notification
+        function showToast(type, message) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i class="fas fa-${icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Remove toast after 3 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+    </script>
 </body>
 </html> 
