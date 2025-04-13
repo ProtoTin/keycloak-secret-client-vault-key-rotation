@@ -1026,24 +1026,27 @@
         }
         
         // Rotate secret function
-        function rotateSecret() {
-            const button = document.getElementById('rotateSecretBtn');
+        function rotateSecret(clientId) {
+            const button = event.target.closest('button');
             const originalText = button.innerHTML;
             
             // Show loading state
             button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner"></i> Rotating...';
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rotating...';
             
             fetch('/rotate-secret', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify({
+                    client_id: clientId
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast('success', 'Secret rotation completed successfully');
+                    showToast('success', `Secret rotation completed successfully for client ${clientId}`);
                     // Refresh the page after 2 seconds to show updated status
                     setTimeout(() => {
                         window.location.reload();
@@ -1057,7 +1060,7 @@
                 console.error('Error:', error);
             })
             .finally(() => {
-                // Restore button state
+                // Reset button state
                 button.disabled = false;
                 button.innerHTML = originalText;
             });

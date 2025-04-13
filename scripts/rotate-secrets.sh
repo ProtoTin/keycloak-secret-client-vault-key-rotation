@@ -85,11 +85,18 @@ update_keycloak_client_secret() {
         exit 1
     fi
     
-    # Update client secret silently
+    # First get the current client configuration
+    local client_config=$(curl -s "$KEYCLOAK_URL/admin/realms/$KEYCLOAK_REALM/clients/$client_uuid" \
+        -H "Authorization: Bearer $admin_token")
+    
+    # Update only the secret in the client configuration
+    local updated_config=$(echo "$client_config" | jq --arg secret "$new_secret" '.secret = $secret')
+    
+    # Update client with the new configuration
     local response=$(curl -s -X PUT "$KEYCLOAK_URL/admin/realms/$KEYCLOAK_REALM/clients/$client_uuid" \
         -H "Authorization: Bearer $admin_token" \
         -H "Content-Type: application/json" \
-        -d "{\"secret\":\"$new_secret\"}")
+        -d "$updated_config")
     
     # Check if the response is empty which indicates success
     if [ -z "$response" ]; then

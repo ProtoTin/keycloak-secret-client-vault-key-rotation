@@ -48,28 +48,37 @@ This project demonstrates automated secret rotation for Keycloak client secrets 
      - Keycloak: admin/admin
      - Vault: Token: root (dev mode)
 
-5. **Run the setup script**
+5. **IMPORTANT: Run the setup script before accessing the Flask app**
 
    ```bash
    ./scripts/setup-keycloak-vault.sh
    ```
 
-   This script will automatically:
+   This script is **required** and must be run before you can log into the Flask app. It will:
    - Create the "demo-realm" in Keycloak
    - Create a new client "demo-client" with:
      - Client Protocol: openid-connect
      - Access Type: confidential
      - Service Accounts Enabled
    - Store the initial client secret in Vault
+   - Create a test user (if not already created) in Keycloak:
+      - Log in to the Keycloak Admin Console at <http://localhost:8080>
+      - Navigate to the "demo-realm"
+      - Go to "Users" and click "Add user"
+      - Create a user with a username and password
+         - Username: testuser
+         - Password: testpass
+      - Set the password in the "Credentials" tab
+      - Enable the "Email verified" option
+      - Click "Save"
 
-6. **Create a test user in Keycloak (if not created already (should be created already))**
-   - Log in to the Keycloak Admin Console at <http://localhost:8080>
-   - Navigate to the "demo-realm"
-   - Go to "Users" and click "Add user"
-   - Create a user with a username and password
-   - Set the password in the "Credentials" tab
-   - Enable the "Email verified" option
-   - Click "Save"
+6. **Access the Flask app**
+   - Open <http://localhost:5001> in your browser
+   - Log in using the test user credentials created by the setup script:
+     - Username: testuser
+     - Password: testpass
+
+   > **Note**: If you try to access the Flask app before running the setup script, you will not be able to log in as the required Keycloak configuration and user will not exist.
 
 ## Flask Application Integration
 
@@ -109,7 +118,7 @@ These are set in the `docker-compose.yml` file.
 ### Usage
 
 1. Access the Flask app at <http://localhost:5001>
-2. Log in using your Keycloak credentials (the test user you created)
+2. Log in using your Keycloak credentials (the test user created by the setup script)
 3. View the status dashboard showing the integration status
 
 ## Secret Rotation
@@ -213,10 +222,11 @@ The solution works as follows:
    - Make sure scripts are executable: `chmod +x scripts/*.sh`
 
 4. **Flask app authentication issues**
+   - Ensure you've run the setup script first
    - Check if the client secret is properly stored in Vault
    - Verify Keycloak client configuration
    - Check Flask app logs: `docker-compose logs status-app`
-   - Ensure you've created a user in Keycloak
+   - Ensure you're using the test user credentials created by the setup script
 
 ## Clean Up
 

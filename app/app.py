@@ -37,14 +37,16 @@ def get_vault_client():
     print(f"Created Vault client with URL: {vault_settings['url']}")
     return client
 
-def get_client_secret_from_vault():
+def get_client_secret_from_vault(client_id=None):
     client = get_vault_client()
     try:
-        print(f"Attempting to read secret from Vault at path: keycloak/clients/demo-client")
+        # Use provided client_id or fall back to default
+        client_id = client_id or keycloak_settings['client_id']
+        print(f"Attempting to read secret from Vault at path: keycloak/clients/{client_id}")
         # First, check if the secret exists
         try:
             secret = client.secrets.kv.v2.read_secret_version(
-                path='keycloak/clients/demo-client',
+                path=f'keycloak/clients/{client_id}',
                 mount_point='secret'
             )
             print("Successfully retrieved secret from Vault")
@@ -53,7 +55,7 @@ def get_client_secret_from_vault():
             print(f"Secret not found, creating a new one...")
             # If the secret doesn't exist, create it with a dummy value
             client.secrets.kv.v2.create_or_update_secret(
-                path='keycloak/clients/demo-client',
+                path=f'keycloak/clients/{client_id}',
                 secret=dict(client_secret='dummy-secret'),
                 mount_point='secret'
             )
@@ -64,14 +66,16 @@ def get_client_secret_from_vault():
         print(f"Vault token: {vault_settings['token'][:5]}...")  # Only print first 5 chars for security
         return None
 
-def get_keycloak_client():
-    client_secret = get_client_secret_from_vault()
+def get_keycloak_client(client_id=None):
+    # Use provided client_id or fall back to default
+    client_id = client_id or keycloak_settings['client_id']
+    client_secret = get_client_secret_from_vault(client_id)
     if not client_secret:
         raise Exception("Could not fetch client secret from Vault")
     
     return KeycloakOpenID(
         server_url=keycloak_settings["server_url"],
-        client_id=keycloak_settings["client_id"],
+        client_id=client_id,
         realm_name=keycloak_settings["realm_name"],
         client_secret_key=client_secret
     )
@@ -157,9 +161,10 @@ def index():
         # Get user info from token
         token_info = session.get('token', {})
         access_token = token_info.get('access_token')
+        current_client_id = token_info.get('client_id', keycloak_settings['client_id'])
         
-        # Get Keycloak client
-        keycloak_client = get_keycloak_client()
+        # Get Keycloak client for the current client
+        keycloak_client = get_keycloak_client(current_client_id)
         
         # Get user info from token
         user_info = keycloak_client.userinfo(token=access_token)
@@ -191,14 +196,16 @@ def index():
                     client_secrets[client_id] = {
                         'version': secret_metadata.get('data', {}).get('current_version', 'Unknown'),
                         'created': secret_metadata.get('data', {}).get('created_time', 'Unknown'),
-                        'secret': secret_info.get('data', {}).get('data', {}).get('client_secret', 'Unknown')
+                        'secret': secret_info.get('data', {}).get('data', {}).get('client_secret', 'Unknown'),
+                        'is_current': client_id == current_client_id
                     }
                 except Exception as e:
                     print(f"Error getting secret for client {client_id}: {str(e)}")
                     client_secrets[client_id] = {
                         'version': 'Unknown',
                         'created': 'Unknown',
-                        'secret': 'Unknown'
+                        'secret': 'Unknown',
+                        'is_current': client_id == current_client_id
                     }
         
         status = {
@@ -211,7 +218,7 @@ def index():
                 'email': user_info.get('email', 'Not provided'),
                 'name': user_info.get('name', 'Not provided'),
                 'roles': user_info.get('realm_access', {}).get('roles', []),
-                'client_id': keycloak_settings['client_id']
+                'client_id': current_client_id
             },
             'system_info': {
                 'vault_status': 'Healthy',
@@ -229,7 +236,7 @@ def index():
                 'email': 'Not available',
                 'name': 'Not available',
                 'roles': [],
-                'client_id': keycloak_settings['client_id']
+                'client_id': current_client_id
             },
             'system_info': {
                 'vault_status': 'Unhealthy',
@@ -243,14 +250,17 @@ def index():
 @app.route('/health')
 def health():
     try:
-        client_secret = get_client_secret_from_vault()
-        keycloak_client = get_keycloak_client()
+        # Get client_id from query parameters or use default
+        client_id = request.args.get('client_id', keycloak_settings['client_id'])
+        client_secret = get_client_secret_from_vault(client_id)
+        keycloak_client = get_keycloak_client(client_id)
         
         return jsonify({
             'status': 'healthy',
             'vault_connected': True,
             'keycloak_connected': True,
-            'secret_rotation_working': True if client_secret else False
+            'secret_rotation_working': True if client_secret else False,
+            'client_id': client_id
         })
     except Exception as e:
         return jsonify({
@@ -262,13 +272,17 @@ def health():
 @login_required
 def rotate_secret():
     try:
-        # Get client_id from request or use the current client ID from session
+        # Get client_id from request
         data = request.get_json()
-        client_id = data.get('client_id') if data else None
-        if not client_id:
-            client_id = session.get('token', {}).get('client_id', keycloak_settings['client_id'])
+        if not data or 'client_id' not in data:
+            return jsonify({
+                'success': False,
+                'message': 'client_id is required in the request body'
+            }), 400
         
-        # Execute the rotation script with the client_id
+        client_id = data['client_id']
+        
+        # Execute the rotation script with the specified client_id
         result = subprocess.run(['/app/scripts/rotate-secrets.sh', client_id], 
                               capture_output=True, 
                               text=True)
