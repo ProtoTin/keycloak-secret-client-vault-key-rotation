@@ -54,16 +54,16 @@ store_client_secret() {
     # Create properly escaped JSON with just the secret value
     local json_data=$(jq -n --arg value "$client_secret" '{"data":{"client_secret":$value}}')
     
-    # Store only the secret value
-    local response=$(curl -s -X POST \
+    # Store only the secret value and redirect output to /dev/null to suppress verbose JSON
+    curl -s -X POST \
         -H "X-Vault-Token: $VAULT_TOKEN" \
         -H "Content-Type: application/json" \
         -d "$json_data" \
-        "$VAULT_ADDR/v1/secret/data/keycloak/clients/$client_id")
+        "$VAULT_ADDR/v1/secret/data/keycloak/clients/$client_id" > /dev/null
     
-    # Check if the response contains "version" which indicates success
-    if ! echo "$response" | grep -q "version"; then
-        log "Failed to store secret in Vault: $response"
+    # Check if the command was successful
+    if [ $? -ne 0 ]; then
+        log "Failed to store secret in Vault for client: $client_id"
         exit 1
     fi
 }

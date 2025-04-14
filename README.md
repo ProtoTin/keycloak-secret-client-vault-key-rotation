@@ -121,6 +121,18 @@ These are set in the `docker-compose.yml` file.
 2. Log in using your Keycloak credentials (the test user created by the setup script)
 3. View the status dashboard showing the integration status
 
+### Authentication Flow
+
+When a user logs into the Flask application:
+
+- The application retrieves the client secret from Vault
+- It uses this secret along with the user's credentials to authenticate with Keycloak
+- Keycloak verifies the client secret and user credentials
+- If valid, Keycloak issues tokens to the application
+- The application uses these tokens for subsequent API calls
+
+This process ensures that only your legitimate application can obtain tokens on behalf of users, protecting against impersonation and unauthorized access.
+
 ## Secret Rotation
 
 The project supports both manual and automatic secret rotation:

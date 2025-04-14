@@ -129,6 +129,7 @@ fi
 
 # Store initial client secret in Vault
 echo "Storing initial client secret in Vault..."
+# Redirect the output to /dev/null to suppress the verbose JSON response
 curl -s -X POST "$VAULT_URL/v1/secret/data/keycloak/clients/demo-client" \
     -H "X-Vault-Token: $VAULT_TOKEN" \
     -H "Content-Type: application/json" \
@@ -138,7 +139,7 @@ curl -s -X POST "$VAULT_URL/v1/secret/data/keycloak/clients/demo-client" \
             \"client_id\": \"demo-client\",
             \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"
         }
-    }"
+    }" > /dev/null
 
 if [ $? -eq 0 ]; then
     echo "Initial client secret stored in Vault successfully"
@@ -150,4 +151,4 @@ fi
 echo "Setup completed!"
 echo "Realm: demo-realm"
 echo "Client ID: demo-client"
-echo "Client Secret Initialized In Keycloak" 
+echo "Client Secret initialized in keycloak" 

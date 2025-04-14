@@ -43,25 +43,21 @@ def get_client_secret_from_vault(client_id=None):
         # Use provided client_id or fall back to default
         client_id = client_id or keycloak_settings['client_id']
         print(f"Attempting to read secret from Vault at path: keycloak/clients/{client_id}")
+        
         # First, check if the secret exists
         try:
             secret = client.secrets.kv.v2.read_secret_version(
                 path=f'keycloak/clients/{client_id}',
                 mount_point='secret'
             )
-            print("Successfully retrieved secret from Vault")
+            print(f"Successfully retrieved secret from Vault for client: {client_id}")
             return secret['data']['data']['client_secret']
         except Exception as e:
-            print(f"Secret not found, creating a new one...")
-            # If the secret doesn't exist, create it with a dummy value
-            client.secrets.kv.v2.create_or_update_secret(
-                path=f'keycloak/clients/{client_id}',
-                secret=dict(client_secret='dummy-secret'),
-                mount_point='secret'
-            )
-            return 'dummy-secret'
+            print(f"Secret not found for client {client_id}: {str(e)}")
+            # Return None 
+            return None
     except Exception as e:
-        print(f"Error fetching secret from Vault: {str(e)}")
+        print(f"Error fetching secret from Vault for client {client_id}: {str(e)}")
         print(f"Vault URL: {vault_settings['url']}")
         print(f"Vault token: {vault_settings['token'][:5]}...")  # Only print first 5 chars for security
         return None
@@ -71,7 +67,10 @@ def get_keycloak_client(client_id=None):
     client_id = client_id or keycloak_settings['client_id']
     client_secret = get_client_secret_from_vault(client_id)
     if not client_secret:
-        raise Exception("Could not fetch client secret from Vault")
+        # Log a clear error message
+        print(f"ERROR: Client secret not found in Vault for client: {client_id}")
+        # You could either raise an exception or handle it differently
+        raise Exception(f"Client secret not found in Vault for client: {client_id}")
     
     return KeycloakOpenID(
         server_url=keycloak_settings["server_url"],
