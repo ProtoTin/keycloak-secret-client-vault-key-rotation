@@ -18,7 +18,7 @@ app.secret_key = os.urandom(24)  # For session management
 keycloak_settings = {
     "server_url": "http://keycloak:8080/",
     "realm_name": "demo-realm",
-    "client_id": "demo-client",
+    "client_id": None,  # Will be determined from the session or environment
     "client_secret_key": None  # Will be fetched from Vault
 }
 
@@ -40,8 +40,19 @@ def get_vault_client():
 def get_client_secret_from_vault(client_id=None):
     client = get_vault_client()
     try:
-        # Use provided client_id or fall back to default
-        client_id = client_id or keycloak_settings['client_id']
+        # Use provided client_id or get from session
+        if client_id is None:
+            token_info = session.get('token', {})
+            client_id = token_info.get('client_id')
+            
+            # If still None, try to get from environment variable
+            if client_id is None:
+                client_id = os.environ.get('DEFAULT_CLIENT_ID')
+                
+            # If still None, use a fallback
+            if client_id is None:
+                client_id = "demo-client"
+                
         print(f"Attempting to read secret from Vault at path: keycloak/clients/{client_id}")
         
         # First, check if the secret exists
@@ -62,9 +73,10 @@ def get_client_secret_from_vault(client_id=None):
         print(f"Vault token: {vault_settings['token'][:5]}...")  # Only print first 5 chars for security
         return None
 
-def get_keycloak_client(client_id=None):
-    # Use provided client_id or fall back to default
-    client_id = client_id or keycloak_settings['client_id']
+def get_keycloak_client(client_id):
+    if not client_id:
+        raise Exception("Client ID is required")
+            
     client_secret = get_client_secret_from_vault(client_id)
     if not client_secret:
         # Log a clear error message
@@ -135,15 +147,51 @@ def login():
         password = request.form.get('password')
         
         try:
-            keycloak_client = get_keycloak_client()
-            print(f"Attempting to authenticate user: {username}")
-            token = keycloak_client.token(username=username, password=password)
-            print("Authentication successful")
-            session['token'] = token
-            session['username'] = username
-            return redirect(url_for('index'))
+            # Get list of available clients from Keycloak
+            clients = get_keycloak_clients()
+            
+            # Try to authenticate with each client
+            for client_info in clients:
+                client_id = client_info.get('clientId')
+                if not client_id:
+                    continue
+                    
+                try:
+                    # Get the client secret from Vault first
+                    client_secret = get_client_secret_from_vault(client_id)
+                    if not client_secret:
+                        print(f"No secret found in Vault for client {client_id}")
+                        continue
+                        
+                    # Try to authenticate with this client
+                    keycloak_client = KeycloakOpenID(
+                        server_url=keycloak_settings["server_url"],
+                        client_id=client_id,
+                        realm_name=keycloak_settings["realm_name"],
+                        client_secret_key=client_secret
+                    )
+                    
+                    token = keycloak_client.token(username=username, password=password)
+                    
+                    # If we get here, authentication was successful
+                    print(f"Authentication successful for user: {username} with client: {client_id}")
+                    
+                    # Store token and user info in session with client_id in token info
+                    token['client_id'] = client_id  # Add client_id to token info
+                    session['token'] = token
+                    session['username'] = username
+                    session['client_id'] = client_id
+                    
+                    return redirect(url_for('index'))
+                except Exception as e:
+                    # Authentication failed with this client, try the next one
+                    print(f"Authentication failed with client {client_id}: {str(e)}")
+                    continue
+            
+            # If we get here, authentication failed with all clients
+            return render_template('login.html', error="Login failed: Invalid username or password")
         except Exception as e:
-            print(f"Authentication failed: {str(e)}")
+            print(f"Error during login: {str(e)}")
             return render_template('login.html', error=f"Login failed: {str(e)}")
     
     return render_template('login.html')
@@ -160,7 +208,16 @@ def index():
         # Get user info from token
         token_info = session.get('token', {})
         access_token = token_info.get('access_token')
-        current_client_id = token_info.get('client_id', keycloak_settings['client_id'])
+        
+        # Get client_id from token info first, then session, then environment
+        current_client_id = token_info.get('client_id')
+        if not current_client_id:
+            current_client_id = session.get('client_id')
+        if not current_client_id:
+            current_client_id = os.environ.get('DEFAULT_CLIENT_ID', 'demo-client')
+            
+        # Store the client_id in the session for future use
+        session['client_id'] = current_client_id
         
         # Get Keycloak client for the current client
         keycloak_client = get_keycloak_client(current_client_id)
@@ -221,7 +278,12 @@ def index():
             },
             'system_info': {
                 'vault_status': 'Healthy',
-                'keycloak_status': 'Connected'
+                'keycloak_status': 'Connected',
+                'current_client': {
+                    'id': current_client_id,
+                    'secret_version': client_secrets.get(current_client_id, {}).get('version', 'Unknown'),
+                    'secret_created': client_secrets.get(current_client_id, {}).get('created', 'Unknown')
+                }
             },
             'clients': client_secrets
         }
@@ -239,7 +301,12 @@ def index():
             },
             'system_info': {
                 'vault_status': 'Unhealthy',
-                'keycloak_status': 'Disconnected'
+                'keycloak_status': 'Disconnected',
+                'current_client': {
+                    'id': current_client_id,
+                    'secret_version': 'Unknown',
+                    'secret_created': 'Unknown'
+                }
             },
             'clients': {}
         }

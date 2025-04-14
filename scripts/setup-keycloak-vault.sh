@@ -136,7 +136,6 @@ curl -s -X POST "$VAULT_URL/v1/secret/data/keycloak/clients/demo-client" \
     -d "{
         \"data\": {
             \"client_secret\": \"$CLIENT_SECRET\",
-            \"client_id\": \"demo-client\",
             \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"
         }
     }" > /dev/null
@@ -151,4 +150,4 @@ fi
 echo "Setup completed!"
 echo "Realm: demo-realm"
 echo "Client ID: demo-client"
-echo "Client Secret initialized in keycloak" 
+echo "Client Secret initialized in Keycloak" 

@@ -861,9 +861,6 @@
                     <button class="btn btn-outline-primary" onclick="refreshStatus()">
                         <i class="fa fa-refresh" id="refresh-icon"></i> Refresh
                     </button>
-                    <button class="btn btn-warning" onclick="rotateSecret()">
-                        <i class="fa fa-key"></i> Rotate Current Client Secret
-                    </button>
                     <button class="btn btn-info" onclick="viewHistory()">
                         <i class="fa fa-history"></i> History
                     </button>
@@ -1022,16 +1019,18 @@
                                         {{ status.system_info.keycloak_status }}
                                     </span>
                                 </li>
-                                {% if status.clients and status.clients.get('demo-client') %}
                                 <li class="info-item">
-                                    <span class="info-label">Current Secret Version</span>
-                                    <span class="info-value">{{ status.clients['demo-client'].version }}</span>
+                                    <span class="info-label">Current Client</span>
+                                    <span class="info-value">{{ status.system_info.current_client.id }}</span>
+                                </li>
+                                <li class="info-item">
+                                    <span class="info-label">Secret Version</span>
+                                    <span class="info-value">{{ status.system_info.current_client.secret_version }}</span>
                                 </li>
                                 <li class="info-item">
                                     <span class="info-label">Secret Created</span>
-                                    <span class="info-value">{{ status.clients['demo-client'].created }}</span>
+                                    <span class="info-value">{{ status.system_info.current_client.secret_created }}</span>
                                 </li>
-                                {% endif %}
                             </ul>
                         </div>
                     </div>
@@ -1103,47 +1102,6 @@
             setTimeout(function() {
                 window.location.reload();
             }, 500);
-        }
-        
-        // Rotate secret function
-        function rotateSecret(clientId) {
-            const button = event.target.closest('button');
-            const originalText = button.innerHTML;
-            
-            // Show loading state
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rotating...';
-            
-            fetch('/rotate-secret', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    client_id: clientId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('success', `Secret rotation completed successfully for client ${clientId}`);
-                    // Refresh the page after 2 seconds to show updated status
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                } else {
-                    showToast('error', data.message || 'Failed to rotate secret');
-                }
-            })
-            .catch(error => {
-                showToast('error', 'An error occurred while rotating the secret');
-                console.error('Error:', error);
-            })
-            .finally(() => {
-                // Reset button state
-                button.disabled = false;
-                button.innerHTML = originalText;
-            });
         }
         
         // View history function

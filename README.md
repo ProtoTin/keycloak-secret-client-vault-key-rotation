@@ -103,18 +103,6 @@ The Flask app is configured with:
 - Keycloak realm and client settings
 - Automatic secret retrieval from Vault
 
-### Environment Variables
-
-The Flask app uses the following environment variables:
-
-```
-FLASK_ENV=development
-VAULT_ADDR=http://vault:8200
-VAULT_TOKEN=root
-```
-
-These are set in the `docker-compose.yml` file.
-
 ### Usage
 
 1. Access the Flask app at <http://localhost:5001>

@@ -15,5 +15,7 @@ COPY app/ .
 # Create scripts directory and copy scripts
 RUN mkdir -p /app/scripts
 COPY scripts/* /app/scripts/
+# Make scripts executable
+RUN chmod +x /app/scripts/*.sh
 
 CMD ["python", "app.py"] 

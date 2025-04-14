@@ -1,10 +1,20 @@
 #!/bin/bash
 
 # Set environment variables
-export VAULT_ADDR="http://localhost:8200"
-export VAULT_TOKEN="root"
-export KEYCLOAK_URL="http://localhost:8080"
-export KEYCLOAK_REALM="demo-realm"
+# Use environment variables if set, otherwise use defaults
+# Check if running inside Docker container
+if [ -f /.dockerenv ]; then
+    # Running inside Docker
+    export VAULT_ADDR=${VAULT_ADDR:-"http://vault:8200"}
+    export KEYCLOAK_URL=${KEYCLOAK_URL:-"http://keycloak:8080"}
+else
+    # Running on host machine
+    export VAULT_ADDR=${VAULT_ADDR:-"http://localhost:8200"}
+    export KEYCLOAK_URL=${KEYCLOAK_URL:-"http://localhost:8080"}
+fi
+
+export VAULT_TOKEN=${VAULT_TOKEN:-"root"}
+export KEYCLOAK_REALM=${KEYCLOAK_REALM:-"demo-realm"}
 
 # Set to false to disable debug output
 DEBUG=false
@@ -51,10 +61,13 @@ store_client_secret() {
     local client_id=$1
     local client_secret=$2
     
-    # Create properly escaped JSON with just the secret value
-    local json_data=$(jq -n --arg value "$client_secret" '{"data":{"client_secret":$value}}')
+    # Create JSON with client_secret and timestamp
+    local json_data=$(jq -n \
+        --arg secret "$client_secret" \
+        --arg time "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+        '{"data":{"client_secret":$secret, "timestamp":$time}}')
     
-    # Store only the secret value and redirect output to /dev/null to suppress verbose JSON
+    # Store the data and redirect output to /dev/null
     curl -s -X POST \
         -H "X-Vault-Token: $VAULT_TOKEN" \
         -H "Content-Type: application/json" \
@@ -120,7 +133,7 @@ rotate_client_secret() {
     store_client_secret "$client_id" "$actual_secret"
     
     # Display success message
-    echo "✅ Secret key successfully rotated"
+    echo "✅ Secret key successfully rotated for client: $client_id"
 }
 
 # Function to auto-rotate secrets at specified interval
