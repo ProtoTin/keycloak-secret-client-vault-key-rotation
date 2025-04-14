@@ -428,9 +428,82 @@
                 padding: 1.5rem 1rem;
             }
         }
+        
+        /* Remove Flying Cars Animation */
+        .flying-cars, .flying-car, .car-body, .car-engine, .car-trail, .cityscape, .building, .neon-light {
+            display: none;
+        }
+        
+        /* Matrix Rain Effect */
+        .matrix-rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .matrix-column {
+            position: absolute;
+            top: -100vh;
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            line-height: 1.2;
+            white-space: nowrap;
+            animation: matrixRain linear infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            will-change: transform;
+            transform: translateY(-100%);
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        .matrix-digit {
+            opacity: 0.8;
+            text-shadow: 0 0 8px currentColor;
+            padding: 2px 0;
+        }
+
+        .matrix-0 {
+            color: var(--primary-color);
+        }
+
+        .matrix-1 {
+            color: var(--success-color);
+        }
+
+        .matrix-2 {
+            color: var(--info-color);
+        }
+
+        .matrix-3 {
+            color: var(--warning-color);
+        }
+
+        @keyframes matrixRain {
+            0% {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(200vh));
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Matrix Rain -->
+    <div class="matrix-rain" id="matrixRain"></div>
+    
     <div class="cyber-line top"></div>
     <div class="cyber-line bottom"></div>
     
@@ -495,6 +568,56 @@
     </div>
     
     <script>
+        // Initialize matrix rain effect
+        function createMatrixRain() {
+            const matrixContainer = document.getElementById('matrixRain');
+            const columnCount = Math.floor(window.innerWidth / 25); // Adjusted density for larger digits
+            
+            // Clear existing columns
+            matrixContainer.innerHTML = '';
+            
+            // Create columns
+            for (let i = 0; i < columnCount; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                
+                // Randomize position
+                column.style.left = `${(i * (100 / columnCount))}%`;
+                
+                // Randomize animation duration between 15-40 seconds for more varied speeds
+                const duration = Math.random() * 25 + 15;
+                column.style.animationDuration = `${duration}s`;
+                
+                // Set a fixed delay of 2 seconds for all columns
+                column.style.animationDelay = '2s';
+                
+                // Create binary string
+                const length = Math.floor(Math.random() * 20) + 20; // Random length between 20-40
+                
+                for (let j = 0; j < length; j++) {
+                    const digit = document.createElement('div');
+                    digit.className = 'matrix-digit';
+                    digit.textContent = Math.random() < 0.5 ? '0' : '1';
+                    digit.classList.add(`matrix-${Math.floor(Math.random() * 4)}`);
+                    column.appendChild(digit);
+                }
+                
+                matrixContainer.appendChild(column);
+            }
+        }
+
+        // Initialize animations when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            createMatrixRain();
+            
+            // Recreate matrix rain on window resize
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(createMatrixRain, 250);
+            });
+        });
+
         // Toggle password visibility
         const togglePassword = document.getElementById('togglePassword');
         const password = document.getElementById('password');

@@ -658,6 +658,192 @@
             }
         }
 
+        /* Neon City Silhouette Animation */
+        .neon-city {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+            background: linear-gradient(to bottom, 
+                #0a0e17 0%,
+                #1a1f35 100%
+            );
+        }
+
+        .cityscape {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 70%;
+            background-image: 
+                linear-gradient(to top, rgba(10, 14, 23, 0.9), transparent),
+                repeating-linear-gradient(90deg,
+                    transparent 0%,
+                    transparent 2%,
+                    rgba(0, 247, 255, 0.1) 2%,
+                    rgba(0, 247, 255, 0.1) 2.5%,
+                    transparent 2.5%
+                );
+            background-size: 100% 100%, 2000px 100%;
+            animation: cityPulse 4s ease-in-out infinite;
+        }
+
+        .building {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(to top,
+                var(--darker-color) 0%,
+                var(--dark-color) 100%
+            );
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.2);
+        }
+
+        .building::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(90deg,
+                transparent 0%,
+                transparent 2%,
+                rgba(0, 247, 255, 0.1) 2%,
+                rgba(0, 247, 255, 0.1) 2.5%,
+                transparent 2.5%
+            );
+            animation: windowGlow 4s ease-in-out infinite;
+        }
+
+        .neon-light {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            box-shadow: 0 0 10px var(--primary-color),
+                       0 0 20px var(--primary-color);
+            animation: lightPulse 2s ease-in-out infinite;
+        }
+
+        .flying-vehicle {
+            position: absolute;
+            width: 40px;
+            height: 20px;
+            background: linear-gradient(90deg,
+                transparent,
+                var(--primary-color),
+                transparent
+            );
+            box-shadow: 0 0 10px var(--primary-color);
+            animation: flyAcross linear infinite;
+        }
+
+        .flying-vehicle::before,
+        .flying-vehicle::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            box-shadow: 0 0 10px var(--primary-color);
+            animation: engineGlow 1s ease-in-out infinite;
+        }
+
+        .flying-vehicle::before {
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .flying-vehicle::after {
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .atmospheric-particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--primary-color);
+            animation: particleFloat linear infinite;
+        }
+
+        @keyframes cityPulse {
+            0%, 100% {
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes windowGlow {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes lightPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 1;
+            }
+        }
+
+        @keyframes flyAcross {
+            0% {
+                transform: translateX(-100px) translateY(0);
+            }
+            50% {
+                transform: translateX(calc(50vw - 20px)) translateY(-50px);
+            }
+            100% {
+                transform: translateX(calc(100vw + 100px)) translateY(0);
+            }
+        }
+
+        @keyframes engineGlow {
+            0%, 100% {
+                opacity: 0.5;
+                transform: translateY(-50%) scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-50%) scale(1.2);
+            }
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) translateX(0);
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+            }
+        }
+
+        /* Remove old robot battle styles */
+        .robot-battle, .robot, .robot-body, .robot-head, .robot-eye, .robot-arm, .energy-blast, .battle-effect {
+            display: none;
+        }
+
         /* Matrix Rain Effect */
         .matrix-rain {
             position: fixed;
@@ -667,125 +853,73 @@
             height: 100vh;
             pointer-events: none;
             z-index: -1;
-            opacity: 0.6;
             overflow: hidden;
         }
 
         .matrix-column {
             position: absolute;
-            top: -100%;
-            width: 25px;
+            top: -100vh;
             font-family: 'Courier New', monospace;
             font-size: 20px;
-            font-weight: bold;
-            animation: matrixRain linear infinite;
+            line-height: 1.2;
             white-space: nowrap;
-            letter-spacing: 2px;
+            animation: matrixRain linear infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            will-change: transform;
+            transform: translateY(-100%);
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        .matrix-digit {
+            opacity: 0.8;
+            text-shadow: 0 0 8px currentColor;
+            padding: 2px 0;
         }
 
         .matrix-0 {
             color: var(--primary-color);
-            text-shadow: 0 0 8px var(--primary-color),
-                         0 0 12px var(--primary-color),
-                         0 0 16px var(--primary-color);
         }
 
         .matrix-1 {
             color: var(--success-color);
-            text-shadow: 0 0 8px var(--success-color),
-                         0 0 12px var(--success-color),
-                         0 0 16px var(--success-color);
+        }
+
+        .matrix-2 {
+            color: var(--info-color);
+        }
+
+        .matrix-3 {
+            color: var(--warning-color);
         }
 
         @keyframes matrixRain {
             0% {
                 transform: translateY(-100%);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
             }
             100% {
-                transform: translateY(100vh);
+                transform: translateY(calc(200vh));
+                opacity: 1;
             }
         }
 
-        /* Cyber Scan Lines */
-        .scan-lines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 0, 0, 0.1),
-                rgba(0, 0, 0, 0.1) 1px,
-                transparent 1px,
-                transparent 2px
-            );
-            pointer-events: none;
-            z-index: 1;
-            animation: scanLines 10s linear infinite;
-        }
-
-        @keyframes scanLines {
-            0% {
-                transform: translateY(0);
-            }
-            100% {
-                transform: translateY(100%);
-            }
-        }
-        
-        /* Glitch Effect */
-        .glitch {
-            position: relative;
-        }
-        
-        .glitch::before,
-        .glitch::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.8;
-        }
-        
-        .glitch::before {
-            color: var(--info-color);
-            z-index: -1;
-            animation: glitch-effect 3s infinite;
-        }
-        
-        .glitch::after {
-            color: var(--danger-color);
-            z-index: -2;
-            animation: glitch-effect 2s infinite;
-        }
-        
-        @keyframes glitch-effect {
-            0% {
-                transform: translate(0);
-            }
-            20% {
-                transform: translate(-2px, 2px);
-            }
-            40% {
-                transform: translate(-2px, -2px);
-            }
-            60% {
-                transform: translate(2px, 2px);
-            }
-            80% {
-                transform: translate(2px, -2px);
-            }
-            100% {
-                transform: translate(0);
-            }
+        /* Remove all other animation styles */
+        .neon-city, .cityscape, .building, .neon-light, .flying-vehicle, .atmospheric-particle,
+        .robot-battle, .robot, .robot-body, .robot-head, .robot-eye, .robot-arm, .energy-blast, .battle-effect,
+        .cyber-particles, .particle, .particle-connection,
+        .matrix-blocks, .code-block, .code-line {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <!-- Matrix Rain Effect -->
+    <!-- Matrix Rain -->
     <div class="matrix-rain" id="matrixRain"></div>
     
     <!-- Cyber Grid -->
@@ -1050,42 +1184,23 @@
         </div>
     </div>
     
+    <!-- Replace Robot Battle with Neon City -->
+    <div class="neon-city" id="neonCity">
+        <div class="cityscape"></div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Initialize matrix rain effect
-        function createMatrixRain() {
-            const matrixContainer = document.getElementById('matrixRain');
-            const characters = '01';
-            const columns = Math.floor(window.innerWidth / 35);
-            
-            for (let i = 0; i < columns; i++) {
-                const column = document.createElement('div');
-                column.className = 'matrix-column';
-                column.style.left = `${i * 35}px`;
-                column.style.animationDuration = `${Math.random() * 8 + 12}s`;
-                
-                // Create random binary numbers for each column
-                let text = '';
-                for (let j = 0; j < 40; j++) {
-                    const char = characters[Math.floor(Math.random() * characters.length)];
-                    const spanClass = char === '0' ? 'matrix-0' : 'matrix-1';
-                    text += `<span class="${spanClass}">${char}</span><br>`;
-                }
-                column.innerHTML = text;
-                
-                matrixContainer.appendChild(column);
-            }
-        }
 
         // Initialize animations when page loads
         document.addEventListener('DOMContentLoaded', function() {
             createMatrixRain();
             
             // Recreate matrix rain on window resize
+            let resizeTimeout;
             window.addEventListener('resize', function() {
-                const matrixContainer = document.getElementById('matrixRain');
-                matrixContainer.innerHTML = '';
-                createMatrixRain();
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(createMatrixRain, 250);
             });
         });
 
@@ -1141,6 +1256,144 @@
                     document.body.removeChild(toast);
                 }, 300);
             }, 3000);
+        }
+
+        // Initialize neon city animation
+        function initNeonCity() {
+            const cityContainer = document.getElementById('neonCity');
+            
+            // Create buildings
+            function createBuildings() {
+                const buildingCount = Math.floor(window.innerWidth / 100);
+                for (let i = 0; i < buildingCount; i++) {
+                    const building = document.createElement('div');
+                    building.className = 'building';
+                    
+                    // Randomize building properties
+                    const height = Math.random() * 300 + 200;
+                    const width = Math.random() * 50 + 50;
+                    const left = (i * (window.innerWidth / buildingCount)) + Math.random() * 50;
+                    
+                    building.style.height = `${height}px`;
+                    building.style.width = `${width}px`;
+                    building.style.left = `${left}px`;
+                    
+                    // Add neon lights to building
+                    const lightCount = Math.floor(Math.random() * 5) + 3;
+                    for (let j = 0; j < lightCount; j++) {
+                        const light = document.createElement('div');
+                        light.className = 'neon-light';
+                        light.style.left = `${Math.random() * width}px`;
+                        light.style.top = `${Math.random() * height}px`;
+                        light.style.animationDelay = `${Math.random() * 2}s`;
+                        building.appendChild(light);
+                    }
+                    
+                    cityContainer.appendChild(building);
+                }
+            }
+            
+            // Create flying vehicles
+            function createFlyingVehicle() {
+                const vehicle = document.createElement('div');
+                vehicle.className = 'flying-vehicle';
+                
+                // Randomize vehicle properties
+                const top = Math.random() * 40 + 10;
+                const duration = Math.random() * 10 + 15;
+                
+                vehicle.style.top = `${top}%`;
+                vehicle.style.animationDuration = `${duration}s`;
+                
+                cityContainer.appendChild(vehicle);
+                
+                // Remove vehicle after animation
+                setTimeout(() => {
+                    vehicle.remove();
+                }, duration * 1000);
+            }
+            
+            // Create atmospheric particles
+            function createParticle() {
+                const particle = document.createElement('div');
+                particle.className = 'atmospheric-particle';
+                
+                // Randomize particle properties
+                const left = Math.random() * window.innerWidth;
+                const duration = Math.random() * 10 + 10;
+                
+                particle.style.left = `${left}px`;
+                particle.style.animationDuration = `${duration}s`;
+                
+                cityContainer.appendChild(particle);
+                
+                // Remove particle after animation
+                setTimeout(() => {
+                    particle.remove();
+                }, duration * 1000);
+            }
+            
+            // Initialize city
+            createBuildings();
+            
+            // Create flying vehicles periodically
+            setInterval(createFlyingVehicle, 3000);
+            
+            // Create particles periodically
+            setInterval(createParticle, 200);
+            
+            // Recreate buildings on window resize
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    cityContainer.innerHTML = '';
+                    createBuildings();
+                }, 250);
+            });
+        }
+
+        // Initialize animations when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initNeonCity();
+        });
+
+        // Initialize matrix rain effect
+        function createMatrixRain() {
+            const matrixContainer = document.getElementById('matrixRain');
+            const columnCount = Math.floor(window.innerWidth / 25); // Adjusted density for larger digits
+            
+            // Clear existing columns
+            matrixContainer.innerHTML = '';
+            
+            // Create columns
+            for (let i = 0; i < columnCount; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                
+                // Randomize position
+                column.style.left = `${(i * (100 / columnCount))}%`;
+                
+                // Randomize animation duration between 15-40 seconds for more varied speeds
+                const duration = Math.random() * 25 + 15;
+                column.style.animationDuration = `${duration}s`;
+                
+                // Set a fixed delay of 2 seconds for all columns
+                column.style.animationDelay = '2s';
+                
+                // Create binary string
+                const length = Math.floor(Math.random() * 20) + 20; // Random length between 20-40
+                
+                for (let j = 0; j < length; j++) {
+                    const digit = document.createElement('div');
+                    digit.className = 'matrix-digit';
+                    digit.textContent = Math.random() < 0.5 ? '0' : '1';
+                    digit.classList.add(`matrix-${Math.floor(Math.random() * 4)}`);
+                    column.appendChild(digit);
+                }
+                
+                matrixContainer.appendChild(column);
+            }
         }
     </script>
 </body>
