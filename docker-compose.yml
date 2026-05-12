@@ -65,6 +65,7 @@ services:
       FLASK_ENV: development
       VAULT_ADDR: http://vault:8200
       VAULT_TOKEN: root
+      SECRET_KEY: d16d64b2d157b3ac697321054aad5dccf95244aa3ff534328d9cd1ff6dddb6d8
     depends_on:
       - keycloak
       - vault
