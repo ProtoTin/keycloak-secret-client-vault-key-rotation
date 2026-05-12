@@ -1,0 +1,21 @@
+services:
+  vault:
+    volumes:
+      - ./vault/config.hcl:/vault/config/config.hcl:ro
+      - vault-data:/vault/data
+      - ./scripts:/scripts
+    environment:
+      VAULT_ADDR: http://0.0.0.0:8200
+    command: server -config=/vault/config/config.hcl
+
+  keycloak:
+    environment:
+      VAULT_TOKEN: ${VAULT_TOKEN}
+
+  status-app:
+    environment:
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      SECRET_KEY: ${SECRET_KEY}
+
+volumes:
+  vault-data:

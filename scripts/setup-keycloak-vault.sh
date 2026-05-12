@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Set environment variables
-KEYCLOAK_URL="http://localhost:8080"
-VAULT_URL="http://localhost:8200"
-VAULT_TOKEN="root"
+KEYCLOAK_URL="${KEYCLOAK_URL:-http://localhost:8080}"
+VAULT_URL="${VAULT_URL:-http://localhost:8200}"
+VAULT_TOKEN="${VAULT_TOKEN:-root}"
 
 # Wait for Vault to be ready
 echo "Waiting for Vault to be ready..."
