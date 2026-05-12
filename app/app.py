@@ -12,7 +12,7 @@ import subprocess
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # For session management
+app.secret_key = os.environ.get('SECRET_KEY', 'change-me-in-production')
 
 # Keycloak settings
 keycloak_settings = {
@@ -24,8 +24,8 @@ keycloak_settings = {
 
 # Vault settings
 vault_settings = {
-    "url": "http://vault:8200",
-    "token": "root"
+    "url": os.environ.get('VAULT_ADDR', 'http://vault:8200'),
+    "token": os.environ.get('VAULT_TOKEN', 'root')
 }
 
 def get_vault_client():
@@ -347,9 +347,16 @@ def rotate_secret():
             }), 400
         
         client_id = data['client_id']
-        
+
+        import re
+        if not re.match(r'^[a-zA-Z0-9_-]+$', client_id):
+            return jsonify({
+                'success': False,
+                'message': 'Invalid client_id format'
+            }), 400
+
         # Execute the rotation script with the specified client_id
-        result = subprocess.run(['/app/scripts/rotate-secrets.sh', client_id], 
+        result = subprocess.run(['/app/scripts/rotate-secrets.sh', client_id],
                               capture_output=True, 
                               text=True)
         

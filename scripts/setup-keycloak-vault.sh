@@ -96,8 +96,8 @@ if [ -z "$CLIENT_EXISTS" ]; then
             "clientId": "demo-client",
             "enabled": true,
             "publicClient": false,
-            "redirectUris": ["http://localhost:3000/*"],
-            "webOrigins": ["http://localhost:3000"]
+            "redirectUris": ["http://localhost:5001/*"],
+            "webOrigins": ["http://localhost:5001"]
         }')
 
     if [ ! -z "$CLIENT_RESPONSE" ]; then
