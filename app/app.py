@@ -2,6 +2,10 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, s
 from keycloak import KeycloakOpenID
 import hvac
 import os
+import uuid
+import string
+import secrets as crypto_secrets
+import re
 from datetime import datetime
 from dotenv import load_dotenv
 from functools import wraps
@@ -396,6 +400,147 @@ def rotate_secret():
 @login_required
 def get_rotation_history():
     return jsonify(list(reversed(rotation_history[-50:])))
+
+
+# ── Password Manager ──────────────────────────────────────────────────────────
+
+def _pw_path(username, entry_id=''):
+    path = f'passwords/{username}'
+    return f'{path}/{entry_id}' if entry_id else path
+
+def _list_pw_keys(username, vault_client):
+    try:
+        result = vault_client.secrets.kv.v2.list_secrets(
+            path=_pw_path(username), mount_point='secret'
+        )
+        return result['data']['keys']
+    except Exception:
+        return []
+
+def _validate_entry_id(entry_id):
+    return bool(re.match(r'^[a-f0-9-]{36}$', entry_id))
+
+@app.route('/passwords')
+@login_required
+def passwords_page():
+    username = session.get('username')
+    vault_client = get_vault_client()
+    entries = []
+    for key in _list_pw_keys(username, vault_client):
+        try:
+            data = vault_client.secrets.kv.v2.read_secret_version(
+                path=_pw_path(username, key), mount_point='secret'
+            )['data']['data']
+            entries.append({
+                'id': key,
+                'site_name': data.get('site_name', ''),
+                'url': data.get('url', ''),
+                'username': data.get('username', ''),
+                'notes': data.get('notes', ''),
+                'updated_at': data.get('updated_at', data.get('created_at', '')),
+            })
+        except Exception:
+            pass
+    entries.sort(key=lambda x: x['site_name'].lower())
+    return render_template('passwords.html', entries=entries, user=session.get('username'))
+
+@app.route('/api/passwords', methods=['POST'])
+@login_required
+def api_create_password():
+    data = request.get_json()
+    if not data or not data.get('site_name') or not data.get('password'):
+        return jsonify({'success': False, 'message': 'site_name and password are required'}), 400
+    username = session.get('username')
+    entry_id = str(uuid.uuid4())
+    now = datetime.now().isoformat()
+    get_vault_client().secrets.kv.v2.create_or_update_secret(
+        path=_pw_path(username, entry_id),
+        secret={
+            'site_name': data.get('site_name', ''),
+            'url': data.get('url', ''),
+            'username': data.get('username', ''),
+            'password': data['password'],
+            'notes': data.get('notes', ''),
+            'created_at': now,
+            'updated_at': now,
+        },
+        mount_point='secret'
+    )
+    return jsonify({'success': True, 'id': entry_id})
+
+@app.route('/api/passwords/<entry_id>', methods=['GET'])
+@login_required
+def api_get_password(entry_id):
+    if not _validate_entry_id(entry_id):
+        return jsonify({'success': False, 'message': 'Invalid entry ID'}), 400
+    username = session.get('username')
+    try:
+        data = get_vault_client().secrets.kv.v2.read_secret_version(
+            path=_pw_path(username, entry_id), mount_point='secret'
+        )['data']['data']
+        return jsonify(data)
+    except Exception:
+        return jsonify({'success': False, 'message': 'Not found'}), 404
+
+@app.route('/api/passwords/<entry_id>', methods=['PUT'])
+@login_required
+def api_update_password(entry_id):
+    if not _validate_entry_id(entry_id):
+        return jsonify({'success': False, 'message': 'Invalid entry ID'}), 400
+    data = request.get_json()
+    if not data or not data.get('site_name') or not data.get('password'):
+        return jsonify({'success': False, 'message': 'site_name and password are required'}), 400
+    username = session.get('username')
+    vault_client = get_vault_client()
+    try:
+        existing = vault_client.secrets.kv.v2.read_secret_version(
+            path=_pw_path(username, entry_id), mount_point='secret'
+        )['data']['data']
+        created_at = existing.get('created_at', datetime.now().isoformat())
+    except Exception:
+        return jsonify({'success': False, 'message': 'Not found'}), 404
+    vault_client.secrets.kv.v2.create_or_update_secret(
+        path=_pw_path(username, entry_id),
+        secret={
+            'site_name': data.get('site_name', ''),
+            'url': data.get('url', ''),
+            'username': data.get('username', ''),
+            'password': data['password'],
+            'notes': data.get('notes', ''),
+            'created_at': created_at,
+            'updated_at': datetime.now().isoformat(),
+        },
+        mount_point='secret'
+    )
+    return jsonify({'success': True})
+
+@app.route('/api/passwords/<entry_id>', methods=['DELETE'])
+@login_required
+def api_delete_password(entry_id):
+    if not _validate_entry_id(entry_id):
+        return jsonify({'success': False, 'message': 'Invalid entry ID'}), 400
+    username = session.get('username')
+    try:
+        get_vault_client().secrets.kv.v2.delete_metadata_and_all_versions(
+            path=_pw_path(username, entry_id), mount_point='secret'
+        )
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/passwords/generate')
+@login_required
+def api_generate_password():
+    length = min(max(int(request.args.get('length', 20)), 8), 64)
+    chars = ''
+    if request.args.get('upper', 'true') == 'true':   chars += string.ascii_uppercase
+    if request.args.get('lower', 'true') == 'true':   chars += string.ascii_lowercase
+    if request.args.get('digits', 'true') == 'true':  chars += string.digits
+    if request.args.get('symbols', 'true') == 'true': chars += '!@#$%^&*()_+-=[]{}|;:,.<>?'
+    if not chars:
+        chars = string.ascii_letters + string.digits
+    return jsonify({'password': ''.join(crypto_secrets.choice(chars) for _ in range(length))})
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True) 
