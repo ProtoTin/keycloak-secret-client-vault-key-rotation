@@ -1,0 +1,21 @@
+# Vault secrets — never commit these
+.vault-keys.json
+.env
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Java/Maven
+target/
+*.jar
+
+# IDE
+.idea/
+*.iml

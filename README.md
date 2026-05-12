@@ -54,31 +54,19 @@ This project demonstrates automated secret rotation for Keycloak client secrets 
    ./scripts/setup-keycloak-vault.sh
    ```
 
-   This script is **required** and must be run before you can log into the Flask app. It will:
+   This script is **required** and must be run before you can log into the Flask app. It is safe to re-run — all steps are idempotent. It will:
    - Create the "demo-realm" in Keycloak
-   - Create a new client "demo-client" with:
-     - Client Protocol: openid-connect
-     - Access Type: confidential
-     - Service Accounts Enabled
-   - Store the initial client secret in Vault
-   - Create a test user (if not already created) in Keycloak:
-      - Log in to the Keycloak Admin Console at <http://localhost:8080>
-      - Navigate to the "demo-realm"
-      - Go to "Users" and click "Add user"
-      - Create a user with a username and password
-         - Username: testuser
-         - Password: testpass
-      - Set the password in the "Credentials" tab
-      - Enable the "Email verified" option
-      - Click "Save"
+   - Create "demo-client" (confidential, openid-connect) with direct access grants enabled
+   - Store the client secret in Vault at `secret/keycloak/clients/demo-client`
+   - Create the test user `testuser` / `testpass` with a complete profile
+
+   > **Note**: Vault runs in dev mode locally, which stores all data in memory. Running
+   > `docker compose down` wipes Vault's secrets. Re-run the setup script after every restart
+   > to resync the client secret into Vault.
 
 6. **Access the Flask app**
    - Open <http://localhost:5001> in your browser
-   - Log in using the test user credentials created by the setup script:
-     - Username: testuser
-     - Password: testpass
-
-   > **Note**: If you try to access the Flask app before running the setup script, you will not be able to log in as the required Keycloak configuration and user will not exist.
+   - Log in with: **testuser** / **testpass**
 
 ## Flask Application Integration
 
