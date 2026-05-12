@@ -1,3 +1,0 @@
-# Run secret rotation every 30 seconds
-* * * * * /scripts/rotate-secrets.sh
-* * * * * sleep 30 && /scripts/rotate-secrets.sh 
