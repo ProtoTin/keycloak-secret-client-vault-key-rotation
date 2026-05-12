@@ -14,6 +14,8 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'change-me-in-production')
 
+rotation_history = []
+
 # Keycloak settings
 keycloak_settings = {
     "server_url": "http://keycloak:8080/",
@@ -361,12 +363,24 @@ def rotate_secret():
                               text=True)
         
         if result.returncode == 0:
+            rotation_history.append({
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'client_id': client_id,
+                'rotated_by': session.get('username', 'unknown'),
+                'status': 'success'
+            })
             return jsonify({
                 'success': True,
                 'message': f'Secret rotation completed successfully for client {client_id}',
                 'details': result.stdout
             })
         else:
+            rotation_history.append({
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'client_id': client_id,
+                'rotated_by': session.get('username', 'unknown'),
+                'status': 'failed'
+            })
             return jsonify({
                 'success': False,
                 'message': f'Secret rotation failed for client {client_id}',
@@ -377,6 +391,11 @@ def rotate_secret():
             'success': False,
             'message': str(e)
         }), 500
+
+@app.route('/rotation-history')
+@login_required
+def get_rotation_history():
+    return jsonify(list(reversed(rotation_history[-50:])))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True) 
