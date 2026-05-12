@@ -96,6 +96,7 @@ if [ -z "$CLIENT_EXISTS" ]; then
             "clientId": "demo-client",
             "enabled": true,
             "publicClient": false,
+            "directAccessGrantsEnabled": true,
             "redirectUris": ["http://localhost:5001/*"],
             "webOrigins": ["http://localhost:5001"]
         }')
@@ -106,7 +107,15 @@ if [ -z "$CLIENT_EXISTS" ]; then
     fi
     echo "Client created successfully"
 else
-    echo "Client 'demo-client' already exists, skipping creation"
+    echo "Client 'demo-client' already exists, ensuring directAccessGrantsEnabled..."
+    CLIENT_UUID=$(curl -s "$KEYCLOAK_URL/admin/realms/demo-realm/clients" \
+        -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[] | select(.clientId=="demo-client") | .id')
+    CLIENT_CONFIG=$(curl -s "$KEYCLOAK_URL/admin/realms/demo-realm/clients/$CLIENT_UUID" \
+        -H "Authorization: Bearer $ADMIN_TOKEN")
+    curl -s -X PUT "$KEYCLOAK_URL/admin/realms/demo-realm/clients/$CLIENT_UUID" \
+        -H "Authorization: Bearer $ADMIN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "$(echo "$CLIENT_CONFIG" | jq '.directAccessGrantsEnabled = true')" > /dev/null
 fi
 
 # Get client ID
@@ -147,7 +156,32 @@ else
     exit 1
 fi
 
+# Create testuser if it doesn't exist
+echo "Checking if testuser exists..."
+USER_EXISTS=$(curl -s "$KEYCLOAK_URL/admin/realms/demo-realm/users?username=testuser" \
+    -H "Authorization: Bearer $ADMIN_TOKEN" | jq -r '.[0].id // empty')
+
+if [ -z "$USER_EXISTS" ]; then
+    echo "Creating testuser..."
+    curl -s -X POST "$KEYCLOAK_URL/admin/realms/demo-realm/users" \
+        -H "Authorization: Bearer $ADMIN_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "username": "testuser",
+            "firstName": "Test",
+            "lastName": "User",
+            "email": "testuser@example.com",
+            "enabled": true,
+            "emailVerified": true,
+            "credentials": [{"type": "password", "value": "testpass", "temporary": false}]
+        }' > /dev/null
+    echo "testuser created (username: testuser, password: testpass)"
+else
+    echo "testuser already exists, skipping creation"
+fi
+
 echo "Setup completed!"
 echo "Realm: demo-realm"
 echo "Client ID: demo-client"
-echo "Client Secret initialized in Keycloak" 
+echo "Client Secret initialized in Keycloak"
+echo "Test user: testuser / testpass"
