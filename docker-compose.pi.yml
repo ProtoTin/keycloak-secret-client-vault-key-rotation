@@ -6,11 +6,10 @@ services:
       - ./scripts:/scripts
     environment:
       VAULT_ADDR: http://0.0.0.0:8200
-    cap_add:
-      - IPC_LOCK
-      - SETFCAP
-    security_opt:
-      - no-new-privileges=false
+      SKIP_SETCAP: "true"
+    cap_add: []
+    cap_drop:
+      - ALL
     command: server -config=/vault/config/config.hcl
 
   keycloak:

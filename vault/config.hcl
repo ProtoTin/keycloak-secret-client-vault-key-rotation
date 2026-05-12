@@ -7,5 +7,6 @@ listener "tcp" {
   tls_disable = 1
 }
 
-api_addr = "http://vault:8200"
-ui       = true
+api_addr      = "http://vault:8200"
+ui            = true
+disable_mlock = true
